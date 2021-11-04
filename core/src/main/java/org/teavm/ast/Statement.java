@@ -15,8 +15,12 @@
  */
 package org.teavm.ast;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public abstract class Statement {
     public abstract void acceptVisitor(StatementVisitor visitor);
@@ -32,10 +36,41 @@ public abstract class Statement {
         return stmt;
     }
 
+    public static AssignmentStatement statementExpr(Expr expr) {
+        AssignmentStatement stmt = new AssignmentStatement();
+        stmt.setRightValue(expr);
+        return stmt;
+    }
+
     public static ReturnStatement exitFunction(Expr result) {
         ReturnStatement stmt = new ReturnStatement();
         stmt.setResult(result);
         return stmt;
+    }
+
+    public static SequentialStatement sequence(Statement... statements) {
+        SequentialStatement seq = new SequentialStatement();
+        seq.getSequence().addAll(Arrays.asList(statements));
+        return seq;
+    }
+
+    public static BlockStatement block(Function<BlockStatement, Collection<Statement>> body) {
+        BlockStatement statement = new BlockStatement();
+        statement.getBody().addAll(body.apply(statement));
+        return statement;
+    }
+
+    public static BreakStatement exitBlock(IdentifiedStatement identifiedStatement) {
+        BreakStatement statement = new BreakStatement();
+        statement.setTarget(identifiedStatement);
+        return statement;
+    }
+
+    public static WhileStatement loopWhile(Expr condition, Function<WhileStatement, Collection<Statement>> body) {
+        WhileStatement statement = new WhileStatement();
+        statement.setCondition(condition);
+        statement.getBody().addAll(body.apply(statement));
+        return statement;
     }
 
     public static ThrowStatement raiseException(Expr exception) {
@@ -60,5 +95,40 @@ public abstract class Statement {
         InitClassStatement stmt = new InitClassStatement();
         stmt.setClassName(className);
         return stmt;
+    }
+
+    public static SwitchStatement choose(Expr selector, Consumer<ChooseBuilder> body) {
+        SwitchStatement statement = new SwitchStatement();
+        statement.setValue(selector);
+        ChooseBuilder builder = new ChooseBuilder(statement);
+        body.accept(builder);
+        return statement;
+    }
+
+    public static class ChooseBuilder {
+        private SwitchStatement statement;
+
+        ChooseBuilder(SwitchStatement statement) {
+            this.statement = statement;
+        }
+
+        public IdentifiedStatement target() {
+            return statement;
+        }
+
+        public void clause(int[] condition, List<Statement> body) {
+            SwitchClause clause = new SwitchClause();
+            clause.setConditions(condition);
+            clause.getBody().addAll(body);
+            statement.getClauses().add(clause);
+        }
+
+        public void clause(int condition, List<Statement> body) {
+            clause(new int[] { condition }, body);
+        }
+
+        public void defaultClause(List<Statement> body) {
+            statement.getDefaultClause().addAll(body);
+        }
     }
 }
