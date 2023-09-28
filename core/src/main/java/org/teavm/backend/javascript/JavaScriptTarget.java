@@ -505,7 +505,11 @@ public class JavaScriptTarget implements TeaVMTarget, TeaVMJavaScriptHost {
 
     private void printWrapperStart(SourceWriter writer) throws IOException {
         writer.append("\"use strict\";").newLine();
-        printUmdStart(writer);
+        if (false) {
+            printUmdStart(writer);
+        } else {
+            writer.append("(");
+        }
         writer.append("function($rt_globals,").ws().append("$rt_exports");
         for (var moduleName : importedModules.values()) {
             writer.append(",").ws().appendFunction(moduleName);
@@ -556,7 +560,21 @@ public class JavaScriptTarget implements TeaVMTarget, TeaVMJavaScriptHost {
     }
 
     private void printWrapperEnd(SourceWriter writer) throws IOException {
-        writer.outdent().append("}));").newLine();
+        if (false) {
+            writer.outdent().append("}));").newLine();
+        } else {
+            writer.outdent().append("})(");
+            appendSelfOrThis(writer);
+            writer.append(",");
+            appendSelfOrThis(writer);
+            writer.append(");");
+        }
+    }
+
+    private void appendSelfOrThis(SourceWriter writer) throws IOException {
+        writer.append("typeof self").ws().append("!==").ws().append("'undefined'")
+                .ws().append("?").ws().append("self")
+                .ws().append(":").ws().append("this");
     }
 
     private void printStats(Renderer renderer, int totalSize) {
