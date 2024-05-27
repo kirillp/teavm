@@ -572,8 +572,12 @@ public class JavaScriptTarget implements TeaVMTarget, TeaVMJavaScriptHost {
     }
 
     private void appendSelfOrThis(SourceWriter writer) throws IOException {
-        writer.append("typeof self").ws().append("!==").ws().append("'undefined'")
+        writer
+                .append("typeof self").ws().append("!==").ws().append("'undefined'")
                 .ws().append("?").ws().append("self")
+                .ws().append(":").ws()
+                .append("typeof global").ws().append("!==").ws().append("'undefined'")
+                .ws().append("?").ws().append("global")
                 .ws().append(":").ws().append("this");
     }
 
